@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARENASYNC - STADIUM DB</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#0f0f1a;--surface2:#13131f;--surface3:#1a1a2e;
+  --border:#1e1e2e;--border2:#2d2d40;
+  --accent:#c084fc;--accent2:#6366f1;--accent3:#818cf8;
+  --green:#4ade80;--red:#ef4444;--amber:#fbbf24;--orange:#f97316;--blue:#60a5fa;--pink:#f472b6;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#374151;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-header{padding:22px 20px 16px;border-bottom:1px solid var(--border)}
+.logo{font-size:17px;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+.logo-sub{font-size:10px;color:var(--accent2);margin-top:3px;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)}
+nav{flex:1;overflow-y:auto;padding:10px 0}
+.nav-group-label{font-size:10px;color:var(--text4);letter-spacing:2px;text-transform:uppercase;
+  padding:12px 20px 4px;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;
+  color:var(--text3);font-size:13px;font-weight:400;border-left:2px solid transparent;
+  transition:all .15s;background:transparent;border-top:none;border-right:none;border-bottom:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--surface2);color:var(--text2)}
+.nav-item.active{background:var(--surface3);color:var(--accent);font-weight:600;border-left-color:var(--accent)}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;border-radius:20px;
+  padding:1px 7px;font-size:10px;font-weight:700;font-family:var(--mono)}
+.sys-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px}
+.sys-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sys-ver{font-size:10px;color:var(--text4);margin-top:2px;font-family:var(--mono)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:28px 32px}
+.page-title{font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:22px}
+.space-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border-radius:10px;padding:16px 18px;border:1px solid var(--border)}
+.stat-card .accent-bar{width:3px;height:28px;border-radius:2px;display:inline-block;margin-right:10px;vertical-align:middle}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-family:var(--mono)}
+.stat-val{font-size:24px;font-weight:700}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.card-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 13px;background:#0a0a12;color:var(--accent2);
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--border);font-family:var(--mono)}
+td{padding:10px 13px;border-bottom:1px solid #131320;color:var(--text2)}
+tr:hover td{background:#0f0f18}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+.badge-green{background:#14532d;color:var(--green)}
+.badge-blue{background:#1e3a5f;color:var(--blue)}
+.badge-amber{background:#78350f;color:var(--amber)}
+.badge-gray{background:#1c1c1c;color:#9ca3af}
+.badge-red{background:#7f1d1d;color:#fca5a5}
+.badge-orange{background:#431407;color:var(--orange)}
+.badge-purple{background:#2e1065;color:var(--accent)}
+
+/* BUTTONS */
+.btn{border:none;padding:8px 18px;border-radius:7px;cursor:pointer;font-size:13px;
+  font-weight:600;font-family:var(--font);transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--accent2);color:#fff}
+.btn-green{background:#16a34a;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.btn-amber{background:#d97706;color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:7px 15px}
+.btn-sm{padding:4px 10px;font-size:11px}
+
+/* FORMS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+label.lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+input,select,textarea{background:#0a0a12;border:1px solid var(--border2);color:var(--text);
+  padding:8px 12px;border-radius:7px;font-family:var(--font);font-size:13px;outline:none;
+  transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent2)}
+select option{background:#0a0a12}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;
+  justify-content:center;z-index:100;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;color:var(--accent);margin-bottom:18px}
+
+/* PROGRESS */
+.progress{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s}
+
+/* CHIP */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* ALERT */
+.alert{border-radius:9px;padding:12px 15px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
+
+/* SEAT MAP */
+.seat-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
+.row-lbl{width:16px;font-size:10px;color:var(--text3);flex-shrink:0;font-family:var(--mono)}
+.seat{width:20px;height:18px;border-radius:3px;cursor:pointer;transition:transform .1s;border:none}
+.seat:hover{transform:scale(1.25)}
+.seat.booked{background:#374151;cursor:not-allowed}
+.seat.booked:hover{transform:none}
+
+/* CROWD BAR */
+.crowd-card{border-left:3px solid var(--border);border-radius:0 8px 8px 0}
+
+/* QR BOX */
+.qr-box{background:var(--surface3);border:2px solid var(--accent2);border-radius:9px;
+  padding:14px;text-align:center;font-family:var(--mono)}
+
+/* SCROLL */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+.tag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid}
+.mono{font-family:var(--mono)}
+.flex{display:flex;align-items:center}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.justify-between{justify-content:space-between}
+.mb-0{margin-bottom:0}.mt-2{margin-top:8px}.mt-3{margin-top:12px}
+.text-green{color:var(--green)}.text-red{color:var(--red)}.text-amber{color:var(--amber)}
+.text-blue{color:var(--blue)}.text-accent{color:var(--accent)}.text-muted{color:var(--text3)}
+.fw-7{font-weight:700}
+.hidden{display:none!important}
+
+/* PIPELINE STAGES */
+.pipeline{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.pipe-stage{flex:1;text-align:center;padding:14px 8px;cursor:pointer;transition:background .15s;border-right:1px solid var(--border)}
+.pipe-stage:last-child{border-right:none}
+.pipe-stage:hover{background:var(--surface2)}
+.pipe-stage.active-stage{background:rgba(99,102,241,.1)}
+.pipe-count{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.pipe-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;
+  font-size:13px;display:flex;align-items:center;gap:8px;max-width:300px;
+  animation:slideUp .2s ease;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.toast.t-success{border-left:3px solid var(--green)}
+.toast.t-error{border-left:3px solid var(--red)}
+.toast.t-info{border-left:3px solid var(--accent2)}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* SEAT SELECTION TRAY */
+.seat-tray{position:sticky;bottom:0;background:var(--surface2);border:1px solid var(--accent2);
+  border-radius:10px;padding:12px 18px;margin-top:12px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;box-shadow:0 -4px 20px rgba(99,102,241,.2)}
+.seat.selected{outline:2px solid #fff;transform:scale(1.15);z-index:1}
+.seat.selected:hover{transform:scale(1.15)}
+/* FOOD QTY */
+.qty-ctrl{display:flex;align-items:center;gap:0}
+.qty-btn{width:24px;height:24px;border-radius:4px;border:1px solid var(--border2);
+  background:var(--surface3);color:var(--text);cursor:pointer;font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:background .1s}
+.qty-btn:hover{background:var(--accent2);color:#fff}
+.qty-num{width:28px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)}
+
+/* Bar chart mini */
+.bar-chart{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;padding:8px 0}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-col{width:100%;display:flex;align-items:flex-end;height:80px;background:#0a0a12;border-radius:5px;overflow:hidden;padding:0 6px}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;transition:height .5s}
+.bar-label{font-size:10px;color:var(--text3)}
+.bar-pct{font-size:12px;font-weight:700;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">⚡ARENASYNC</div>
+    <div class="logo-sub">Stadium Operations DB</div>
+  </div>
+  <nav id="nav">
+    <div class="nav-group-label">Overview</div>
+    <button class="nav-item active" data-page="dashboard">🏟&nbsp; Dashboard</button>
+    <div class="nav-group-label">Operations</div>
+    <button class="nav-item" data-page="events">📅&nbsp; Events</button>
+    <button class="nav-item" data-page="seats">💺&nbsp; Seat Bookings</button>
+    <button class="nav-item" data-page="parking">🅿&nbsp;&nbsp;Parking</button>
+    <button class="nav-item" data-page="food">🍔&nbsp; Food Orders</button>
+    <div class="nav-group-label">Monitoring</div>
+    <button class="nav-item" data-page="crowd">👥&nbsp; Crowd Flow</button>
+    <button class="nav-item" data-page="entry">🚪&nbsp; Entry & QR</button>
+    <button class="nav-item" data-page="staff">👷&nbsp; Staff Mgmt</button>
+    <button class="nav-item" data-page="incidents">🚨&nbsp; Emergency <span class="nav-badge hidden" id="incBadge">0</span></button>
+    <div class="nav-group-label">Analytics</div>
+    <button class="nav-item" data-page="reports">📊&nbsp; Reports</button>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="main">
+  <div id="content"></div>
+</main>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+const API = 'http://localhost:3000/api';
+let currentPage = 'dashboard';
+
+// ── Helpers ───────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const el = (tag, props={}, ...kids) => {
+  const e = document.createElement(tag);
+  Object.entries(props).forEach(([k,v]) => k==='class' ? e.className=v : k==='html' ? e.innerHTML=v : e.setAttribute(k,v));
+  kids.forEach(k => e.appendChild(typeof k==='string' ? document.createTextNode(k) : k));
+  return e;
+};
+const fmtINR = n => `₹${Number(n||0).toLocaleString('en-IN')}`;
+const fmtDate = d => d ? new Date(d).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : '—';
+
+const toast = (msg, type='info') => {
+  const t = document.createElement('div');
+  t.className = `toast t-${type}`;
+  t.innerHTML = `<span>${{success:'✓',error:'✗',info:'ℹ'}[type]||'ℹ'}</span><span>${msg}</span>`;
+  $('toasts').appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+};
+
+const badge = (s) => {
+  const map = {
+    upcoming:'badge-blue', ongoing:'badge-green', completed:'badge-gray', cancelled:'badge-gray',
+    confirmed:'badge-green', cancelled:'badge-gray', used:'badge-purple',
+    booked:'badge-blue', available:'badge-green',
+    delivered:'badge-green', preparing:'badge-amber', pending:'badge-gray',
+    'on-duty':'badge-green', break:'badge-amber', 'off-duty':'badge-gray',
+    active:'badge-red', resolved:'badge-green',
+    Low:'badge-green', Medium:'badge-amber', High:'badge-orange', Critical:'badge-red'
+  };
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
+};
+
+const densityColor = {Low:'#22c55e', Medium:'#f59e0b', High:'#f97316', Critical:'#ef4444'};
+const sectionColor = {VIP:'#c084fc', Premium:'#60a5fa', Standard:'#4ade80', Economy:'#fbbf24'};
+
+async function api(path, method='GET', body) {
+  try {
+    const r = await fetch(API+path, {
+      method, headers:{'Content-Type':'application/json'},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch(e) {
+    // Show error but also unblock the page so navigation still works
+    $('content').innerHTML = `<div style="padding:40px;text-align:center;color:var(--red)">
+      ⚠ Could not load data — is the server running?<br>
+      <span style="font-size:12px;color:var(--text3);margin-top:6px;display:block">${e.message}</span>
+      <button class="btn btn-outline" style="margin-top:16px" onclick="pages['${currentPage}']()">Retry</button>
+    </div>`;
+    return null;
+  }
+}
+
+// ── Nav ───────────────────────────────────────────────────────
+$('nav').addEventListener('click', e => {
+  const btn = e.target.closest('[data-page]');
+  if (!btn) return;
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPage = btn.dataset.page;
+  pages[currentPage]();
+});
+
+// ── Render helpers ────────────────────────────────────────────
+function statCard(label, val, color) {
+  return `<div class="stat-card" style="border-color:${color}33">
+    <div class="stat-label"><span class="accent-bar" style="background:${color}"></span>${label}</div>
+    <div class="stat-val" style="color:${color}">${val}</div>
+  </div>`;
+}
+
+function tableHead(...cols) {
+  return `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
+}
+
+function modal(id, title, bodyHtml) {
+  return `<div class="modal-bg" id="${id}">
+    <div class="modal-card">
+      <div class="modal-title">${title}</div>
+      ${bodyHtml}
+    </div>
+  </div>`;
+}
+
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+function selectOpts(arr, valKey, labelKey, selectedVal='') {
+  return arr.map(a => `<option value="${a[valKey]}" ${a[valKey]==selectedVal?'selected':''}>${a[labelKey]}</option>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PAGE RENDERERS
+// ══════════════════════════════════════════════════════════════
+const pages = {
+
+// ── DASHBOARD ────────────────────────────────────────────────
+async dashboard() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const data = await api('/dashboard');
+  if (!data) return;
+  const s = data.stats;
+
+  const alertHtml = s.active_incidents > 0 ? `
+    <div class="alert" style="background:#7f1d1d22;border:1px solid #ef444455;border-radius:9px;margin-bottom:20px">
+      <span style="font-size:18px">🚨</span>
+      <div>
+        <div style="font-weight:700;color:#fca5a5;margin-bottom:2px">Emergency Alert</div>
+        <div style="font-size:13px;color:#fca5a5">${s.active_incidents} active incident(s). Check Emergency panel.</div>
+      </div>
+    </div>` : '';
+
+  const foodPipeMap = {};
+  (data.food_pipeline||[]).forEach(f => foodPipeMap[f.status] = f);
+
+  $('content').innerHTML = `
+    <div class="page-title">Stadium Operations Dashboard</div>
+    <div class="page-sub">Live overview — ArenaMax Stadium & SportsPlex Arena</div>
+    ${alertHtml}
+    <div class="stat-grid">
+      ${statCard('Total Revenue', fmtINR(s.total_revenue), '#a78bfa')}
+      ${statCard('Active Bookings', s.confirmed_bookings, '#60a5fa')}
+      ${statCard('Checked In', s.checked_in, '#4ade80')}
+      ${statCard('Live Events', s.live_events, '#fb923c')}
+      ${statCard('Parked Vehicles', s.parked_vehicles, '#f472b6')}
+      ${statCard('Food Revenue', fmtINR(s.food_revenue), '#facc15')}
+    </div>
+    <div class="card-grid-2">
+      <div class="card">
+        <div class="card-title">🎟 Recent Bookings</div>
+        <table>
+          ${tableHead('ID','Guest','Event','Amount')}
+          <tbody>${(data.recent_bookings||[]).map(b=>`<tr>
+            <td><span class="mono text-accent" style="font-size:11px">${b.booking_id}</span></td>
+            <td>${b.guest_name}</td>
+            <td><span class="text-muted" style="font-size:12px">${b.event_name}</span></td>
+            <td class="text-green fw-7">${fmtINR(b.amount)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 Crowd Flow — Live</div>
+        ${(data.crowd_flow||[]).map(cf=>`
+          <div style="margin-bottom:13px">
+            <div class="flex justify-between">
+              <span style="font-size:13px;font-weight:600">${cf.gate}</span>
+              <span class="chip" style="background:${densityColor[cf.density]}22;color:${densityColor[cf.density]};border:1px solid ${densityColor[cf.density]}44">● ${cf.density}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${Number(cf.entry_count).toLocaleString()} in / ${Number(cf.exit_count).toLocaleString()} out</div>
+            <div class="progress"><div class="progress-fill" style="width:${Math.min((cf.entry_count/15000)*100,100)}%;background:${densityColor[cf.density]}"></div></div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">📅 Upcoming Events</div>
+        ${(data.upcoming_events||[]).map(ev=>`
+          <div style="padding:9px 0;border-bottom:1px solid var(--border)">
+            <div class="flex justify-between">
+              <span style="font-weight:600;font-size:13px">${ev.name}</span>
+              ${badge(ev.status)}
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px">${ev.event_date} at ${ev.event_time} · ${fmtINR(ev.base_price)}</div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">🍔 Food Orders Pipeline</div>
+        ${['pending','preparing','delivered'].map(st=>{
+          const f = foodPipeMap[st]||{cnt:0,rev:0};
+          const col = {pending:'#6366f1',preparing:'#f59e0b',delivered:'#4ade80'}[st];
+          return `<div style="margin-bottom:11px">
+            <div class="flex justify-between">
+              <span style="font-size:13px">${st.charAt(0).toUpperCase()+st.slice(1)}</span>
+              <span style="font-size:13px;font-weight:700;color:${col}">${f.cnt} orders · ${fmtINR(f.rev)}</span>
+            </div>
+            <div class="progress"><div class="progress-fill" style="width:${f.cnt>0?'100':'0'}%;background:${col}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+},
+
+// ── EVENTS ────────────────────────────────────────────────────
+async events() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const [events, stadiums] = await Promise.all([api('/events'), api('/stadiums')]);
+  if (!events) return;
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Event Management</div><div class="page-sub">Schedule and manage stadium events</div></div>
+      <button class="btn btn-primary" onclick="openModal('eventModal')">+ Add Event</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          ${tableHead('#','Event Name','Stadium','Date','Time','Sport','Base Price','Status','Actions')}
+          <tbody>${events.map(ev=>`<tr>
+            <td><span class="mono text-accent" style="font-size:11px">#${ev.event_id}</span></td>
+            <td><strong>${ev.name}</strong></td>
+            <td><span class="text-muted">${ev.stadium_name}</span></td>
+            <td class="mono" style="font-size:11px">${ev.event_date}</td>
+            <td class="mono" style="font-size:11px">${ev.event_time}</td>
+            <td><span class="tag" style="color:#a78bfa;border-color:#a78bfa44;background:#a78bfa11">${ev.sport}</span></td>
+            <td class="text-green fw-7">${fmtINR(ev.base_price)}</td>
+            <td>${badge(ev.status)}</td>
+            <td>
+              <button class="btn btn-outline btn-sm" onclick="deleteEvent(${ev.event_id})">Del</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    ${modal('eventModal','📅 Add New Event',`
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Event Name</label><input id="ev_name" placeholder="e.g. IPL Finals 2026"></div>
+        <div class="form-group"><label class="lbl">Sport</label>
+          <select id="ev_sport">${['Cricket','Football','Kabaddi','Basketball','Hockey','Tennis'].map(s=>`<option>${s}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Date</label><input type="date" id="ev_date"></div>
+        <div class="form-group"><label class="lbl">Time</label><input type="time" id="ev_time"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Stadium</label>
+          <select id="ev_stadium">${(stadiums||[]).map(s=>`<option value="${s.stadium_id}">${s.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Base Price (₹)</label><input type="number" id="ev_price" value="500"></div>
+      </div>
+      <div class="flex gap-2" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-outline" onclick="closeModal('eventModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+      </div>
+    `)}`;
+
+  document.querySelectorAll('.modal-bg').forEach(m =>
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+},
+
+// ── SEATS ─────────────────────────────────────────────────────
+async seats() {
+  const events = await api('/events');
+  if (!events) return;
+  const activeEvents = events.filter(e=>e.status!=='completed');
+  const firstId = activeEvents[0]?.event_id || events[0]?.event_id;
+  await renderSeats(firstId, events);
+},
+
+// ── PARKING ───────────────────────────────────────────────────
+async parking() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const [parking, events] = await Promise.all([api('/parking'), api('/events')]);
+  if (!parking) return;
+  const total = 2000, used = parking.length;
+  const zones = ['A','B','C','D'];
+  const zoneCapacity = {A:600,B:500,C:500,D:400};
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Parking Management</div><div class="page-sub">Vehicle allocation · 4 zones · ${total.toLocaleString()} total slots</div></div>
+      <button class="btn btn-primary" onclick="openModal('parkModal')">+ Allocate Slot</button>
+    </div>
+    <div class="stat-grid">
+      ${statCard('Total Slots', total.toLocaleString(), '#6366f1')}
+      ${statCard('Occupied', used, '#ef4444')}
+      ${statCard('Available', total-used, '#4ade80')}
+      ${statCard('Occupancy', Math.round((used/total)*100)+'%', '#f59e0b')}
+    </div>
+    <div class="card-grid-4">
+      ${zones.map(z=>{
+        const cnt = parking.filter(p=>p.zone===z).length;
+        const cap = zoneCapacity[z];
+        const pct = Math.round((cnt/cap)*100);
+        const col = pct>80?'#ef4444':pct>50?'#f59e0b':'#4ade80';
+        return `<div class="card mb-0">
+          <div style="font-size:18px;font-weight:700;color:#a78bfa;margin-bottom:3px">Zone ${z}</div>
+          <div style="font-size:12px;color:var(--text3)">${cnt} / ${cap}</div>
+          <div class="progress mt-2"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">🚗 Parked Vehicles</div>
+      <div class="table-wrap">
+        <table>
+          ${tableHead('Alloc ID','Zone','Slot','Type','Plate','Booked By','Event','Status','Action')}
+          <tbody>${parking.map(p=>`<tr>
+            <td><span class="mono text-accent" style="font-size:11px">${p.alloc_id}</span></td>
+            <td><span class="tag" style="color:#a78bfa;border-color:#a78bfa44;background:#a78bfa11">Zone ${p.zone}</span></td>
+            <td class="mono" style="font-size:11px">${p.slot}</td>
+            <td>${p.vehicle_type}</td>
+            <td><span style="background:var(--surface3);padding:2px 7px;border-radius:4px;font-family:var(--mono);font-size:11px">${p.vehicle_plate}</span></td>
+            <td>${p.booked_by}</td>
+            <td><span class="text-muted" style="font-size:11px">${p.event_name}</span></td>
+            <td>${badge(p.status)}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="freeParking('${p.alloc_id}')">Free</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    ${modal('parkModal','🅿 Allocate Parking Slot',`
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Zone</label>
+          <select id="pk_zone">${zones.map(z=>`<option value="${z}">Zone ${z}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Vehicle Type</label>
+          <select id="pk_type">${['2-Wheeler','4-Wheeler','Bus/Coach','Handicapped'].map(t=>`<option>${t}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Booked By</label><input id="pk_by" placeholder="Guest name"></div>
+        <div class="form-group"><label class="lbl">Vehicle Plate</label><input id="pk_plate" placeholder="e.g. TN01AB1234"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label class="lbl">Event</label>
+        <select id="pk_event">${(events||[]).map(e=>`<option value="${e.event_id}">${e.name}</option>`).join('')}</select>
+      </div>
+      <div class="flex gap-2" style="justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('parkModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveParking()">Allocate</button>
+      </div>
+    `)}`;
+  document.querySelectorAll('.modal-bg').forEach(m =>
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+},
+
+// ── FOOD ──────────────────────────────────────────────────────
+async food() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  window._cart = {};
+  const [rawOrders, events] = await Promise.all([api('/food'), api('/events')]);
+  if (!rawOrders) return;
+
+  // Safely normalise items — MySQL may return JSON string or already-parsed array
+  const orders = rawOrders.map(o => {
+    let items = o.items;
+    if (typeof items === 'string') { try { items = JSON.parse(items); } catch(_) { items = [items]; } }
+    if (!Array.isArray(items)) items = items ? [String(items)] : [];
+    return { ...o, items };
+  });
+
+  const MENU = [
+    {name:'Biryani',price:180,cat:'Meals'},{name:'Burger',price:120,cat:'Snacks'},
+    {name:'Popcorn',price:80,cat:'Snacks'},{name:'Sandwich',price:90,cat:'Snacks'},
+    {name:'Pizza Slice',price:140,cat:'Snacks'},{name:'Cold Drink',price:60,cat:'Beverages'},
+    {name:'Juice',price:70,cat:'Beverages'},{name:'Water',price:20,cat:'Beverages'},
+    {name:'Ice Cream',price:80,cat:'Desserts'},{name:'Chips',price:50,cat:'Snacks'}
+  ];
+  const cats = [...new Set(MENU.map(m=>m.cat))];
+  const byStatus = s => orders.filter(o=>o.status===s);
+  const totalRev = orders.reduce((s,o)=>s+Number(o.amount),0);
+
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Food & Beverage Orders</div><div class="page-sub">Seat-side delivery · ${fmtINR(totalRev)} total revenue</div></div>
+      <button class="btn btn-primary" onclick="openModal('foodModal')">+ New Order</button>
+    </div>
+    <div class="pipeline">
+      ${['pending','preparing','delivered'].map(st=>{
+        const col={pending:'#6366f1',preparing:'#f59e0b',delivered:'#4ade80'}[st];
+        return `<div class="pipe-stage" onclick="filterFoodTable('${st}')">
+          <div class="pipe-count" style="color:${col}">${byStatus(st).length}</div>
+          <div class="pipe-label">${st}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card-grid-2">
+      <div class="card">
+        <div class="card-title">📋 Menu</div>
+        ${cats.map(cat=>`
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-family:var(--mono)">${cat}</div>
+            ${MENU.filter(m=>m.cat===cat).map(item=>`
+              <div class="flex justify-between" style="padding:5px 0;border-bottom:1px solid #131320">
+                <span style="font-size:13px">${item.name}</span>
+                <span style="font-size:13px;font-weight:700;color:var(--green)">${fmtINR(item.price)}</span>
+              </div>`).join('')}
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">🍽 Order Pipeline</div>
+        <div class="table-wrap">
+          <table id="foodTable">
+            ${tableHead('Order','Seat','Items','Amount','Status','Action')}
+            <tbody id="foodBody">
+              ${orders.map(o=>`<tr data-status="${o.status}">
+                <td><span class="mono text-accent" style="font-size:11px">${o.order_id}</span></td>
+                <td><span class="tag" style="color:#a78bfa;border-color:#a78bfa44;background:#a78bfa11">${o.seat_id||'—'}</span></td>
+                <td><span class="text-muted" style="font-size:11px">${Array.isArray(o.items)?o.items.join(', '):o.items}</span></td>
+                <td class="text-green fw-7">${fmtINR(o.amount)}</td>
+                <td>${badge(o.status)}</td>
+                <td>
+                  ${o.status==='pending'?`<button class="btn btn-amber btn-sm" onclick="updateFoodStatus('${o.order_id}','preparing')">Prepare</button>`:''}
+                  ${o.status==='preparing'?`<button class="btn btn-green btn-sm" onclick="updateFoodStatus('${o.order_id}','delivered')">Deliver</button>`:''}
+                  ${o.status==='delivered'?`<span class="text-green" style="font-size:12px">✓ Done</span>`:''}
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    ${modal('foodModal','🛒 Place Food Order',`
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Event</label>
+          <select id="fo_event">${(events||[]).map(e=>`<option value="${e.event_id}">${e.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Seat ID</label><input id="fo_seat" placeholder="e.g. A3, C7"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="lbl" style="display:block;margin-bottom:6px">Select Items</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="menuGrid">
+          ${MENU.map(item=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 11px;
+              border-radius:7px;border:1px solid var(--border);background:var(--surface2)" id="menu_${item.name.replace(/\s+/g,'_')}">
+              <span style="font-size:13px;flex:1">${item.name}<br>
+                <span style="font-size:11px;color:var(--green)">${fmtINR(item.price)}</span>
+              </span>
+              <div class="qty-ctrl">
+                <button class="qty-btn" onclick="changeQty('${item.name}',${item.price},-1)">−</button>
+                <span class="qty-num" id="qty_${item.name.replace(/\s+/g,'_')}">0</span>
+                <button class="qty-btn" onclick="changeQty('${item.name}',${item.price},1)">+</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div style="background:#0a0a12;border-radius:7px;padding:9px 13px;margin-bottom:13px">
+        <div class="flex justify-between">
+          <span style="color:var(--text3);font-size:13px" id="cartCount">0 items selected</span>
+          <span style="color:var(--green);font-weight:700" id="cartTotal">Total: ₹0</span>
+        </div>
+      </div>
+      <div class="flex gap-2" style="justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('foodModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="placeOrder()">Place Order</button>
+      </div>
+    `)}`;
+  document.querySelectorAll('.modal-bg').forEach(m =>
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+},
+
+// ── CROWD ─────────────────────────────────────────────────────
+async crowd() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const crowd = await api('/crowd');
+  if (!crowd) return;
+  const totalIn = crowd.reduce((s,c)=>s+Number(c.entry_count),0);
+  const totalOut = crowd.reduce((s,c)=>s+Number(c.exit_count),0);
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Crowd Flow Monitoring</div><div class="page-sub">Real-time entry/exit tracking across all gates</div></div>
+      <button class="btn btn-primary" id="simBtn" onclick="simulateCrowd()">🔄 Simulate Update</button>
+    </div>
+    <div class="stat-grid">
+      ${statCard('Total Inside', (totalIn-totalOut).toLocaleString(), '#60a5fa')}
+      ${statCard('Total Entries', totalIn.toLocaleString(), '#4ade80')}
+      ${statCard('Total Exits', totalOut.toLocaleString(), '#f472b6')}
+      ${statCard('Capacity Used', Math.round(((totalIn-totalOut)/50000)*100)+'%', '#f59e0b')}
+    </div>
+    <div class="card-grid-2" id="crowdCards">
+      ${crowd.map(cf=>`
+        <div class="card crowd-card" style="border-left-color:${densityColor[cf.density]}">
+          <div class="flex justify-between" style="margin-bottom:10px">
+            <div style="font-size:15px;font-weight:700">${cf.gate}</div>
+            <span class="chip" style="background:${densityColor[cf.density]}22;color:${densityColor[cf.density]};border:1px solid ${densityColor[cf.density]}44;font-weight:700">● ${cf.density}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div style="background:#0a0a12;border-radius:7px;padding:9px 13px">
+              <div style="font-size:10px;color:var(--text3)">ENTRIES</div>
+              <div style="font-size:18px;font-weight:700;color:var(--green)">${Number(cf.entry_count).toLocaleString()}</div>
+            </div>
+            <div style="background:#0a0a12;border-radius:7px;padding:9px 13px">
+              <div style="font-size:10px;color:var(--text3)">EXITS</div>
+              <div style="font-size:18px;font-weight:700;color:#f472b6">${Number(cf.exit_count).toLocaleString()}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text3)">Net inside: <strong style="color:var(--text2)">${(cf.entry_count-cf.exit_count).toLocaleString()}</strong></div>
+          <div class="progress mt-2"><div class="progress-fill" style="width:${Math.min((cf.entry_count/15000)*100,100)}%;background:${densityColor[cf.density]}"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">Gate capacity: 15,000</div>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Gate Comparison</div>
+      <div class="bar-chart">
+        ${crowd.map(cf=>`
+          <div class="bar-wrap">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${cf.gate}</div>
+            <div class="bar-col">
+              <div class="bar-fill" style="height:${Math.min((cf.entry_count/15000)*100,100)}%;background:${densityColor[cf.density]}88"></div>
+            </div>
+            <div class="bar-pct" style="color:${densityColor[cf.density]}">${Math.round((cf.entry_count/15000)*100)}%</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+},
+
+// ── ENTRY & QR ────────────────────────────────────────────────
+async entry() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const bookings = await api('/bookings');
+  if (!bookings) return;
+  $('content').innerHTML = `
+    <div class="page-title">Entry Timing & QR Ticketing</div>
+    <div class="page-sub">Scan QR codes · Manage check-ins · Track entry</div>
+    <div class="card-grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">📷 QR Scanner</div>
+        <label class="lbl">Scan or Enter QR Code / Booking ID</label>
+        <div class="flex gap-2" style="margin-top:5px;margin-bottom:12px">
+          <input id="scanInput" placeholder="e.g. QR-BK001-A3-IPL or BK001" style="flex:1"
+            onkeydown="if(event.key==='Enter')scanQR()">
+          <button class="btn btn-primary" onclick="scanQR()">Scan</button>
+        </div>
+        <div class="flex gap-2" style="flex-wrap:wrap;margin-bottom:12px">
+          ${bookings.map(b=>`<button class="btn btn-outline btn-sm" onclick="$('scanInput').value='${b.qr_code}'">${b.booking_id}</button>`).join('')}
+        </div>
+        <div id="scanResult"></div>
+      </div>
+      <div class="card" style="overflow-y:auto;max-height:480px">
+        <div class="card-title">🎟 QR Tickets</div>
+        ${bookings.map(b=>{
+          const ev = b.event_name;
+          return `<div style="background:#0a0a12;border:1px solid var(--border);border-radius:9px;padding:13px;margin-bottom:10px">
+            <div class="flex justify-between" style="margin-bottom:8px">
+              <div style="font-weight:600;font-size:13px">${b.guest_name}</div>
+              ${b.check_in ? `<span class="chip" style="background:#4ade8022;color:#4ade80;border:1px solid #4ade8044;font-size:10px">✓ Checked In</span>`
+                : `<span class="chip" style="background:#6366f122;color:#818cf8;border:1px solid #6366f144;font-size:10px">Pending</span>`}
+            </div>
+            <div class="qr-box">
+              <div style="font-size:10px;color:#6366f1;margin-bottom:4px">QR CODE</div>
+              <div style="font-size:11px;color:#a78bfa;word-break:break-all">${b.qr_code}</div>
+              <div style="display:flex;justify-content:center;margin-top:7px;gap:2px">
+                ${Array.from({length:8},(_,i)=>`<div style="width:5px;height:5px;background:${i%2===0?'#6366f1':'#1e1e2e'};border-radius:1px"></div>`).join('')}
+              </div>
+            </div>
+            <div class="flex gap-3 mt-2">
+              <span style="font-size:11px;color:var(--text3)">Seat: <span style="color:#a78bfa">${b.seat_id}</span></span>
+              <span style="font-size:11px;color:var(--text3)">Amt: <span style="color:var(--green)">${fmtINR(b.amount)}</span></span>
+            </div>
+            ${b.check_in?`<div style="font-size:10px;color:var(--green);margin-top:5px">⏱ ${fmtDate(b.check_in)}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⏱ Entry Log</div>
+      <div class="table-wrap">
+        <table>
+          ${tableHead('Booking ID','Guest','Seat','Event','Booked At','Check-In','Status')}
+          <tbody>${bookings.map(b=>`<tr>
+            <td><span class="mono text-accent" style="font-size:11px">${b.booking_id}</span></td>
+            <td>${b.guest_name}</td>
+            <td><span class="tag" style="color:#a78bfa;border-color:#a78bfa44;background:#a78bfa11">${b.seat_id}</span></td>
+            <td><span class="text-muted" style="font-size:11px">${b.event_name}</span></td>
+            <td class="text-muted" style="font-size:11px">${fmtDate(b.booked_at)}</td>
+            <td>${b.check_in?`<span style="font-size:11px;color:var(--green)">${fmtDate(b.check_in)}</span>`:'<span class="text-muted">—</span>'}</td>
+            <td>${badge(b.check_in?'confirmed':'pending')}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+},
+
+// ── STAFF ─────────────────────────────────────────────────────
+async staff() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const staff = await api('/staff');
+  if (!staff) return;
+  const roles = ['Gate Manager','Security','Parking Attendant','Food Counter','Medical','Crowd Control','Ticketing'];
+  const gates = ['North Gate','South Gate','East Gate','West Gate','Parking A','Parking B','Zone 1','Zone 2','Medical'];
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Staff Management</div><div class="page-sub">On-duty personnel · Shift assignments</div></div>
+      <button class="btn btn-primary" onclick="openModal('staffModal')">+ Add Staff</button>
+    </div>
+    <div class="stat-grid">
+      ${statCard('Total Staff', staff.length, '#6366f1')}
+      ${statCard('On Duty', staff.filter(s=>s.status==='on-duty').length, '#4ade80')}
+      ${statCard('On Break', staff.filter(s=>s.status==='break').length, '#f59e0b')}
+      ${statCard('Evening Shift', staff.filter(s=>s.shift==='Evening').length, '#a78bfa')}
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          ${tableHead('Staff ID','Name','Role','Gate/Zone','Shift','Status','Action')}
+          <tbody>${staff.map(s=>`<tr>
+            <td><span class="mono text-accent" style="font-size:11px">${s.staff_id}</span></td>
+            <td><strong>${s.name}</strong></td>
+            <td><span class="tag" style="color:#6366f1;border-color:#6366f144;background:#6366f111">${s.role}</span></td>
+            <td>${s.gate}</td>
+            <td><span class="text-muted" style="font-size:12px">${s.shift}</span></td>
+            <td>${badge(s.status)}</td>
+            <td class="flex gap-2">
+              <button class="btn btn-outline btn-sm" onclick="toggleStaff('${s.staff_id}')">
+                ${s.status==='on-duty'?'Break':'Resume'}
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="deleteStaff('${s.staff_id}')">Del</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    ${modal('staffModal','👷 Add Staff Member',`
+      <div class="form-group" style="margin-bottom:13px"><label class="lbl">Full Name</label><input id="sf_name" placeholder="Staff member name"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Role</label>
+          <select id="sf_role">${roles.map(r=>`<option>${r}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Gate/Zone</label>
+          <select id="sf_gate">${gates.map(g=>`<option>${g}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Shift</label>
+          <select id="sf_shift">${['Morning','Afternoon','Evening','Night'].map(s=>`<option>${s}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Status</label>
+          <select id="sf_status"><option value="on-duty">On Duty</option><option value="break">Break</option></select>
+        </div>
+      </div>
+      <div class="flex gap-2" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-outline" onclick="closeModal('staffModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStaff()">Add Staff</button>
+      </div>
+    `)}`;
+  document.querySelectorAll('.modal-bg').forEach(m =>
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+},
+
+// ── INCIDENTS ─────────────────────────────────────────────────
+async incidents() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const [incidents, events, crowd] = await Promise.all([api('/incidents'), api('/events'), api('/crowd')]);
+  if (!incidents) return;
+  const active = incidents.filter(i=>i.status==='active');
+  const sColor = {Low:'#22c55e',Medium:'#f59e0b',High:'#f97316',Critical:'#ef4444'};
+  const types = ['Overcrowding','Medical Emergency','Fire Alert','Security Breach','Infrastructure','Fight/Altercation','Lost Person','Electrical Issue'];
+  const gates = ['North Gate','South Gate','East Gate','West Gate','Section A','Section B','Section C','Section D','Parking','VIP Area','Medical Bay'];
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Emergency & Incident Management</div><div class="page-sub">Real-time crowd safety · Active incident tracking</div></div>
+      <button class="btn btn-red" onclick="openModal('incModal')">🚨 Log Incident</button>
+    </div>
+    <div class="stat-grid">
+      ${statCard('Active Incidents', active.length, '#ef4444')}
+      ${statCard('Resolved Today', incidents.filter(i=>i.status==='resolved').length, '#4ade80')}
+      ${statCard('Critical Gates', (crowd||[]).filter(c=>c.density==='Critical').length, '#f97316')}
+      ${statCard('High Density Gates', (crowd||[]).filter(c=>c.density==='High'||c.density==='Critical').length, '#fbbf24')}
+    </div>
+    ${active.map(inc=>`
+      <div class="alert" style="background:#7f1d1d22;border:1px solid #ef444455;border-radius:9px">
+        <span style="font-size:20px">🚨</span>
+        <div style="flex:1">
+          <div class="flex justify-between">
+            <div style="font-weight:700;color:#fca5a5;font-size:14px">[${inc.severity}] ${inc.type} — ${inc.gate}</div>
+            <span class="mono text-muted" style="font-size:11px">${inc.incident_id}</span>
+          </div>
+          <div style="font-size:13px;color:#94a3b8;margin-top:4px">${inc.description}</div>
+          <div class="flex gap-2 mt-2">
+            <span style="font-size:11px;color:var(--text3)">${fmtDate(inc.occurred_at)}</span>
+            <button class="btn btn-green btn-sm" onclick="resolveIncident('${inc.incident_id}')">✓ Mark Resolved</button>
+          </div>
+        </div>
+      </div>`).join('')}
+    <div class="card">
+      <div class="card-title">📋 Incident Log</div>
+      <div class="table-wrap">
+        <table>
+          ${tableHead('ID','Type','Gate','Severity','Event','Description','Status','Action')}
+          <tbody>${incidents.map(inc=>`<tr>
+            <td><span class="mono text-accent" style="font-size:11px">${inc.incident_id}</span></td>
+            <td><strong>${inc.type}</strong></td>
+            <td>${inc.gate}</td>
+            <td><span class="chip" style="background:${sColor[inc.severity]}22;color:${sColor[inc.severity]};border:1px solid ${sColor[inc.severity]}44">${inc.severity}</span></td>
+            <td><span class="text-muted" style="font-size:11px">${inc.event_name}</span></td>
+            <td><span class="text-muted" style="font-size:11px">${inc.description}</span></td>
+            <td>${badge(inc.status)}</td>
+            <td>${inc.status==='active'
+              ?`<button class="btn btn-green btn-sm" onclick="resolveIncident('${inc.incident_id}')">Resolve</button>`
+              :`<span class="text-green" style="font-size:12px">✓ Resolved</span>`}
+            </td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚠️ Crowd Density Alerts</div>
+      ${(crowd||[]).map(cf=>`
+        <div class="flex justify-between" style="padding:9px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <span style="font-weight:600;margin-right:10px">${cf.gate}</span>
+            <span class="chip" style="background:${sColor[cf.density]}22;color:${sColor[cf.density]};border:1px solid ${sColor[cf.density]}44">${cf.density}</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2)">
+            ${Number(cf.entry_count).toLocaleString()} in · ${Number(cf.exit_count).toLocaleString()} out
+            ${cf.density==='Critical'?`<span style="color:var(--red);font-weight:700;margin-left:8px">⚠ ATTENTION</span>`:''}
+          </div>
+        </div>`).join('')}
+    </div>
+    ${modal('incModal','🚨 Log New Incident',`
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Incident Type</label>
+          <select id="inc_type">${types.map(t=>`<option>${t}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Severity</label>
+          <select id="inc_sev">${['Low','Medium','High','Critical'].map(s=>`<option>${s}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="lbl">Location/Gate</label>
+          <select id="inc_gate">${gates.map(g=>`<option>${g}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Event</label>
+          <select id="inc_event">${(events||[]).map(e=>`<option value="${e.event_id}">${e.name}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label class="lbl">Description</label>
+        <textarea id="inc_desc" style="min-height:65px;resize:vertical" placeholder="Describe the incident..."></textarea>
+      </div>
+      <div class="flex gap-2" style="justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('incModal')">Cancel</button>
+        <button class="btn btn-red" onclick="saveIncident()">Log Incident</button>
+      </div>
+    `)}`;
+  document.querySelectorAll('.modal-bg').forEach(m =>
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+  // update badge
+  const cnt = active.length;
+  const badge_el = $('incBadge');
+  if (cnt > 0) { badge_el.textContent = cnt; badge_el.classList.remove('hidden'); }
+  else badge_el.classList.add('hidden');
+},
+
+// ── REPORTS ───────────────────────────────────────────────────
+async reports() {
+  $('content').innerHTML = `<div class="text-muted" style="padding:40px;text-align:center">Loading...</div>`;
+  const data = await api('/reports');
+  if (!data) return;
+  const t = data.totals;
+  const sCol = {VIP:'#a78bfa',Premium:'#60a5fa',Standard:'#4ade80',Economy:'#fbbf24'};
+  $('content').innerHTML = `
+    <div class="page-title">Analytics & Reports</div>
+    <div class="page-sub">Revenue breakdown · Occupancy · Performance metrics</div>
+    <div class="stat-grid">
+      ${statCard('Grand Total Revenue', fmtINR(t.grand), '#a78bfa')}
+      ${statCard('Booking Revenue', fmtINR(t.booking), '#60a5fa')}
+      ${statCard('Food Revenue', fmtINR(t.food), '#4ade80')}
+      ${statCard('Parking Revenue', fmtINR(t.parking), '#fbbf24')}
+      ${statCard('Check-in Rate', t.check_in_rate+'%', '#f472b6')}
+      ${statCard('Total Bookings', t.total_bookings, '#fb923c')}
+    </div>
+    <div class="card-grid-2">
+      <div class="card">
+        <div class="card-title">💰 Revenue by Section</div>
+        ${(data.section_revenue||[]).map(s=>{
+          const col = sCol[s.section]||'#94a3b8';
+          const pct = t.booking>0?Math.round((s.rev/t.booking)*100):0;
+          return `<div style="margin-bottom:13px">
+            <div class="flex justify-between">
+              <span class="tag" style="color:${col};border-color:${col}44;background:${col}11">${s.section}</span>
+              <span style="color:${col};font-weight:700">${fmtINR(s.rev)}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px">${s.cnt} bookings</div>
+            <div class="progress"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">📅 Revenue by Event</div>
+        <div class="table-wrap">
+          <table>
+            ${tableHead('Event','Bookings','Revenue')}
+            <tbody>${(data.event_revenue||[]).sort((a,b)=>b.rev-a.rev).map(e=>`<tr>
+              <td style="font-size:13px">${e.name}</td>
+              <td style="color:var(--blue)">${e.cnt}</td>
+              <td class="text-green fw-7">${fmtINR(e.rev)}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🍔 Food Order Analysis</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+          ${(data.food_analysis||[]).map(f=>{
+            const col={pending:'#6366f1',preparing:'#f59e0b',delivered:'#4ade80'}[f.status]||'#94a3b8';
+            return `<div style="background:#0a0a12;border-radius:7px;padding:11px 13px;border:1px solid ${col}33">
+              <div style="font-size:10px;color:${col};text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:5px">${f.status}</div>
+              <div style="font-size:20px;font-weight:700;color:${col}">${f.cnt}</div>
+              <div style="font-size:11px;color:var(--text3)">${fmtINR(f.rev)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏟 Stadium Utilization</div>
+        ${(data.stadium_utilization||[]).map(st=>{
+          const util = Math.round((st.total_bookings/st.capacity)*100);
+          return `<div style="margin-bottom:15px">
+            <div style="font-weight:700;margin-bottom:3px">${st.name}</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:5px">${st.city} · ${Number(st.capacity).toLocaleString()} capacity</div>
+            <div class="flex justify-between">
+              <span style="font-size:12px;color:var(--text2)">Booking utilization</span>
+              <span style="font-size:13px;font-weight:700;color:#a78bfa">${util}%</span>
+            </div>
+            <div class="progress"><div class="progress-fill" style="width:${util}%;background:#a78bfa"></div></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px">
+              ${[['Sections',st.sections],['Parking',Number(st.parking_slots).toLocaleString()],['Events',st.events_count||'—']].map(([l,v])=>`
+                <div style="background:#0a0a12;border-radius:5px;padding:7px;text-align:center">
+                  <div style="font-size:14px;font-weight:700">${v}</div>
+                  <div style="font-size:10px;color:var(--text3)">${l}</div>
+                </div>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+};
+
+// ── SEAT MAP RENDERER (multi-select) ─────────────────────────
+let _selectedSeats = []; // [{seat_id, section, price}]
+let _currentEventId = null;
+let _currentEvents = [];
+
+async function renderSeats(eventId, events) {
+  _currentEventId = eventId;
+  _currentEvents = events;
+  _selectedSeats = [];
+
+  const [seats, bookings] = await Promise.all([
+    api(`/seats?event_id=${eventId}`),
+    api(`/bookings?event_id=${eventId}`)
+  ]);
+  if (!seats) return;
+  const ev = events.find(e=>e.event_id==eventId);
+  const rows = ['A','B','C','D','E','F','G','H'];
+  const mulMap = {VIP:3.0,Premium:2.0,Standard:1.5,Economy:1.0};
+  const seatMap = {};
+  seats.forEach(s => seatMap[s.seat_id] = s);
+
+  $('content').innerHTML = `
+    <div class="space-between">
+      <div><div class="page-title">Seat Booking System</div>
+        <div class="page-sub">Click seats to select · Book multiple at once · Dynamic pricing</div>
+      </div>
+      <select style="width:220px" onchange="renderSeats(this.value, _currentEvents)">
+        ${events.map(e=>`<option value="${e.event_id}" ${e.event_id==eventId?'selected':''}>${e.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card">
+      <div style="text-align:center;color:var(--text3);font-size:11px;background:#0a0a12;padding:7px 0;border-radius:7px;margin-bottom:12px">🎤 STAGE / PITCH</div>
+      <div class="flex gap-3 justify-center" style="margin-bottom:14px;flex-wrap:wrap">
+        ${Object.entries(sectionColor).map(([sec,col])=>`
+          <div class="flex gap-2">
+            <div style="width:12px;height:12px;background:${col};border-radius:2px;margin-top:2px"></div>
+            <span style="font-size:11px;color:var(--text2)">${sec} (${fmtINR(Math.round((ev?.base_price||0)*mulMap[sec]))})</span>
+          </div>`).join('')}
+        <div class="flex gap-2">
+          <div style="width:12px;height:12px;background:#374151;border-radius:2px;margin-top:2px"></div>
+          <span style="font-size:11px;color:var(--text2)">Booked</span>
+        </div>
+        <div class="flex gap-2">
+          <div style="width:12px;height:12px;background:#fff;border-radius:2px;outline:2px solid #6366f1;margin-top:2px"></div>
+          <span style="font-size:11px;color:var(--text2)">Selected</span>
+        </div>
+      </div>
+      ${rows.map(row=>`
+        <div class="seat-row">
+          <span class="row-lbl">${row}</span>
+          ${Array.from({length:20},(_,i)=>{
+            const id = `${row}${i+1}`;
+            const s = seatMap[id];
+            if (!s) return '';
+            const booked = s.booked;
+            const col = booked ? '#374151' : sectionColor[s.section]+'cc';
+            const onclick = booked ? '' : `toggleSeatSelect('${id}','${s.section}',${s.price})`;
+            return `<div class="seat ${booked?'booked':''}" id="seat_${id}"
+              style="background:${col}"
+              title="${id} — ${s.section}${booked?'' : ' — '+fmtINR(s.price)}"
+              onclick="${onclick}"></div>`;
+          }).join('')}
+        </div>`).join('')}
+
+      <!-- SELECTION TRAY -->
+      <div class="seat-tray" id="seatTray" style="display:none">
+        <div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:3px">SELECTED SEATS</div>
+          <div id="traySeats" style="font-size:13px;font-weight:600;color:var(--accent)"></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:3px">TOTAL</div>
+          <div id="trayTotal" style="font-size:18px;font-weight:700;color:var(--green)">₹0</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-outline btn-sm" onclick="clearSeatSelection()">Clear</button>
+          <button class="btn btn-green" onclick="openMultiBookingModal()">Book <span id="trayCount">0</span> Seat(s)</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px">
+        ${['VIP','Premium','Standard','Economy'].map(sec=>{
+          const secSeats = seats.filter(s=>s.section===sec);
+          const booked = secSeats.filter(s=>s.booked).length;
+          const total = secSeats.length;
+          const col = sectionColor[sec];
+          return `<div style="background:#0a0a12;border-radius:7px;padding:9px 13px;border:1px solid var(--border)">
+            <div style="font-size:11px;color:${col};font-weight:700">${sec}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">${booked}/${total} booked</div>
+            <div class="progress"><div class="progress-fill" style="width:${total?Math.round((booked/total)*100):0}%;background:${col}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎟 Booking Records</div>
+      <div class="table-wrap">
+        <table>
+          ${tableHead('Booking ID','Seat','Guest','Email','Amount','Status','Check-in')}
+          <tbody id="bookingBody">
+            ${(bookings||[]).map(b=>`<tr>
+              <td><span class="mono text-accent" style="font-size:11px">${b.booking_id}</span></td>
+              <td><span class="tag" style="color:#a78bfa;border-color:#a78bfa44;background:#a78bfa11">${b.seat_id}</span></td>
+              <td>${b.guest_name}</td>
+              <td><span class="text-muted" style="font-size:11px">${b.email||'—'}</span></td>
+              <td class="text-green fw-7">${fmtINR(b.amount)}</td>
+              <td>${badge(b.status)}</td>
+              <td>${b.check_in?`<span style="font-size:11px;color:var(--green)">${fmtDate(b.check_in)}</span>`:'<span class="text-muted">—</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-bg" id="bookingModal">
+      <div class="modal-card">
+        <div class="modal-title" id="bmTitle">💺 Book Seats</div>
+        <div id="bmBody"></div>
+      </div>
+    </div>`;
+  document.querySelector('#bookingModal').addEventListener('click', e => {
+    if (e.target.id==='bookingModal') closeModal('bookingModal');
+  });
+}
+
+function toggleSeatSelect(seatId, section, price) {
+  const el = $('seat_'+seatId);
+  const idx = _selectedSeats.findIndex(s=>s.seat_id===seatId);
+  if (idx > -1) {
+    // deselect
+    _selectedSeats.splice(idx, 1);
+    el.classList.remove('selected');
+    el.style.background = sectionColor[section]+'cc';
+  } else {
+    // select
+    _selectedSeats.push({seat_id:seatId, section, price});
+    el.classList.add('selected');
+    el.style.background = '#ffffff';
+  }
+  updateSeatTray();
+}
+
+function updateSeatTray() {
+  const tray = $('seatTray');
+  if (_selectedSeats.length === 0) { tray.style.display='none'; return; }
+  tray.style.display = 'flex';
+  $('traySeats').textContent = _selectedSeats.map(s=>s.seat_id).join(', ');
+  $('trayTotal').textContent = fmtINR(_selectedSeats.reduce((s,x)=>s+x.price,0));
+  $('trayCount').textContent = _selectedSeats.length;
+}
+
+function clearSeatSelection() {
+  _selectedSeats.forEach(s => {
+    const el = $('seat_'+s.seat_id);
+    if (el) { el.classList.remove('selected'); el.style.background = sectionColor[s.section]+'cc'; }
+  });
+  _selectedSeats = [];
+  updateSeatTray();
+}
+
+function openMultiBookingModal() {
+  if (_selectedSeats.length === 0) return;
+  const total = _selectedSeats.reduce((s,x)=>s+x.price,0);
+  $('bmTitle').textContent = `💺 Book ${_selectedSeats.length} Seat(s)`;
+  $('bmBody').innerHTML = `
+    <div style="background:#0a0a12;border:1px solid var(--border);border-radius:8px;padding:11px 15px;margin-bottom:15px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">SELECTED SEATS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        ${_selectedSeats.map(s=>`
+          <span style="background:${sectionColor[s.section]}22;color:${sectionColor[s.section]};
+            border:1px solid ${sectionColor[s.section]}44;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700">
+            ${s.seat_id} · ${fmtINR(s.price)}
+          </span>`).join('')}
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between">
+        <span style="font-size:12px;color:var(--text3)">${_selectedSeats.length} seat(s)</span>
+        <span style="font-size:16px;font-weight:700;color:var(--green)">${fmtINR(total)}</span>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-family:var(--mono)">
+      ONE BOOKING WILL BE CREATED PER SEAT WITH THE SAME GUEST DETAILS
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="lbl">Guest Name</label><input id="bm_name" placeholder="Full name"></div>
+      <div class="form-group"><label class="lbl">Phone</label><input id="bm_phone" placeholder="10-digit mobile"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px"><label class="lbl">Email</label><input id="bm_email" placeholder="email@example.com"></div>
+    <div id="bookingProgress" style="display:none;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:5px">Booking in progress...</div>
+      <div class="progress"><div class="progress-fill" id="bookingProgressBar" style="width:0%;background:var(--green)"></div></div>
+    </div>
+    <div class="flex gap-2" style="justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('bookingModal')">Cancel</button>
+      <button class="btn btn-green" id="confirmBtn" onclick="confirmMultiBooking(${_currentEventId})">
+        Confirm ${_selectedSeats.length} Booking(s)
+      </button>
+    </div>`;
+  openModal('bookingModal');
+}
+
+// kept for backward compat (single seat click from old code paths)
+function openBookingModal(seatId, section, price, eventId) {
+  toggleSeatSelect(seatId, section, price);
+  openMultiBookingModal();
+}
+
+async function confirmMultiBooking(eventId) {
+  const name = $('bm_name').value, phone = $('bm_phone').value, email = $('bm_email').value;
+  if (!name) { toast('Enter guest name','error'); return; }
+
+  const btn = $('confirmBtn');
+  btn.disabled = true; btn.textContent = 'Booking...';
+  $('bookingProgress').style.display = 'block';
+
+  const seats = [..._selectedSeats];
+  let done = 0, failed = 0;
+  for (const s of seats) {
+    const r = await api('/bookings','POST',{event_id:eventId, seat_id:s.seat_id,
+      guest_name:name, phone, email, amount:s.price});
+    if (r) done++; else failed++;
+    const pct = Math.round(((done+failed)/seats.length)*100);
+    $('bookingProgressBar').style.width = pct+'%';
+  }
+
+  if (failed === 0) toast(`✓ ${done} booking(s) confirmed!`, 'success');
+  else toast(`${done} booked, ${failed} failed`, failed===seats.length?'error':'info');
+
+  closeModal('bookingModal');
+  clearSeatSelection();
+  await renderSeats(eventId, _currentEvents);
+}
+
+// legacy single confirm (kept for safety)
+async function confirmBooking(seatId, price, eventId) {
+  const name = $('bm_name').value, phone = $('bm_phone').value, email = $('bm_email').value;
+  if (!name) { toast('Enter guest name','error'); return; }
+  const r = await api('/bookings','POST',{event_id:eventId,seat_id:seatId,guest_name:name,phone,email,amount:price});
+  if (r) {
+    toast(`Booking confirmed! ${r.booking_id}`,'success');
+    closeModal('bookingModal');
+    await renderSeats(eventId, _currentEvents);
+  }
+}
+
+// ── ACTION HANDLERS ───────────────────────────────────────────
+async function saveEvent() {
+  const body = {name:$('ev_name').value, event_date:$('ev_date').value, event_time:$('ev_time').value,
+    sport:$('ev_sport').value, stadium_id:$('ev_stadium').value, base_price:$('ev_price').value, status:'upcoming'};
+  if (!body.name||!body.event_date) { toast('Fill required fields','error'); return; }
+  const r = await api('/events','POST',body);
+  if (r) { toast('Event created!','success'); closeModal('eventModal'); pages.events(); }
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  await api(`/events/${id}`,'DELETE');
+  toast('Event deleted','info'); pages.events();
+}
+
+async function saveParking() {
+  const body = {event_id:$('pk_event').value, zone:$('pk_zone').value,
+    vehicle_type:$('pk_type').value, vehicle_plate:$('pk_plate').value, booked_by:$('pk_by').value};
+  const r = await api('/parking','POST',body);
+  if (r) { toast(`Slot ${r.slot} allocated`,'success'); closeModal('parkModal'); pages.parking(); }
+}
+
+async function freeParking(id) {
+  if (!confirm('Free this slot?')) return;
+  await api(`/parking/${id}`,'DELETE');
+  toast('Slot freed','info'); pages.parking();
+}
+
+window._cart = {}; // {name: {price, qty}}
+
+function changeQty(name, price, delta) {
+  const key = name.replace(/\s+/g,'_');
+  const cur = window._cart[name]?.qty || 0;
+  const nxt = Math.max(0, cur + delta);
+  if (nxt === 0) delete window._cart[name];
+  else window._cart[name] = {price, qty: nxt};
+
+  // update display
+  const qtyEl = $('qty_'+key);
+  const rowEl = $('menu_'+key);
+  if (qtyEl) qtyEl.textContent = nxt;
+  if (rowEl) {
+    rowEl.style.borderColor = nxt > 0 ? 'var(--accent2)' : 'var(--border)';
+    rowEl.style.background  = nxt > 0 ? '#1e1e3a' : 'var(--surface2)';
+  }
+  // update summary
+  const entries = Object.entries(window._cart);
+  const totalQty = entries.reduce((s,[,v])=>s+v.qty, 0);
+  const totalAmt = entries.reduce((s,[,v])=>s+v.price*v.qty, 0);
+  $('cartCount').textContent = `${totalQty} item(s) selected`;
+  $('cartTotal').textContent = `Total: ${fmtINR(totalAmt)}`;
+}
+
+async function placeOrder() {
+  const entries = Object.entries(window._cart);
+  if (entries.length === 0) { toast('Add at least one item','error'); return; }
+  const seatId = $('fo_seat').value.trim();
+  if (!seatId) { toast('Enter seat ID','error'); return; }
+
+  // Build flat items array with quantities e.g. ["Biryani x2", "Water x1"]
+  const items = entries.map(([name,v]) => v.qty > 1 ? `${name} x${v.qty}` : name);
+  const amount = entries.reduce((s,[,v])=>s+v.price*v.qty, 0);
+
+  const r = await api('/food','POST',{
+    event_id: $('fo_event').value,
+    seat_id:  seatId,
+    items,
+    amount
+  });
+  if (r) {
+    toast('Order placed!','success');
+    closeModal('foodModal');
+    window._cart = {};
+    pages.food();
+  }
+}
+
+async function updateFoodStatus(id, status) {
+  await api(`/food/${id}/status`,'PUT',{status});
+  toast(`Order → ${status}`,'success'); pages.food();
+}
+
+function filterFoodTable(status) {
+  document.querySelectorAll('#foodBody tr').forEach(tr=>{
+    tr.style.display = tr.dataset.status===status?'':'none';
+  });
+}
+
+async function simulateCrowd() {
+  const btn = $('simBtn');
+  btn.textContent = 'Updating...'; btn.disabled = true;
+  await api('/crowd/simulate','PUT');
+  setTimeout(()=>{ btn.disabled=false; pages.crowd(); }, 800);
+}
+
+async function scanQR() {
+  const code = $('scanInput').value.trim();
+  if (!code) return;
+  const r = await api(`/bookings/scan/${encodeURIComponent(code)}`);
+  const el = $('scanResult');
+  if (!r) {
+    el.innerHTML = `<div class="alert" style="background:#7f1d1d22;border:1px solid #ef444455;border-radius:8px">
+      <span>❌</span><span style="color:#fca5a5;font-weight:600">Invalid or unrecognized ticket</span></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="alert" style="background:#14532d22;border:1px solid #4ade8055;border-radius:8px">
+    <span>✅</span>
+    <div style="flex:1">
+      <div style="font-weight:700;color:var(--green)">Valid Ticket</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:3px">${r.guest_name} · Seat ${r.seat_id} · ${r.event_name}</div>
+      ${r.check_in
+        ? `<div style="font-size:12px;color:var(--amber);margin-top:4px">Already checked in at ${fmtDate(r.check_in)}</div>`
+        : `<button class="btn btn-green btn-sm" style="margin-top:8px" onclick="doCheckIn('${r.booking_id}')">✓ Mark Check-In</button>`}
+    </div>
+  </div>`;
+}
+
+async function doCheckIn(id) {
+  await api(`/bookings/${id}/checkin`,'PUT');
+  toast('Check-in logged ✓','success');
+  $('scanResult').innerHTML = '';
+  $('scanInput').value = '';
+  pages.entry();
+}
+
+async function saveStaff() {
+  const name = $('sf_name').value;
+  if (!name) { toast('Enter name','error'); return; }
+  const r = await api('/staff','POST',{name, role:$('sf_role').value, gate:$('sf_gate').value,
+    shift:$('sf_shift').value, status:$('sf_status').value});
+  if (r) { toast('Staff added','success'); closeModal('staffModal'); pages.staff(); }
+}
+
+async function toggleStaff(id) {
+  await api(`/staff/${id}/toggle`,'PUT');
+  pages.staff();
+}
+
+async function deleteStaff(id) {
+  if (!confirm('Remove staff member?')) return;
+  await api(`/staff/${id}`,'DELETE');
+  toast('Staff removed','info'); pages.staff();
+}
+
+async function saveIncident() {
+  const body = {event_id:$('inc_event').value, type:$('inc_type').value,
+    gate:$('inc_gate').value, severity:$('inc_sev').value, description:$('inc_desc').value};
+  const r = await api('/incidents','POST',body);
+  if (r) { toast('Incident logged 🚨','error'); closeModal('incModal'); pages.incidents(); }
+}
+
+async function resolveIncident(id) {
+  await api(`/incidents/${id}/resolve`,'PUT');
+  toast('Incident resolved','success'); pages.incidents();
+}
+
+// ── BOOT ─────────────────────────────────────────────────────
+pages.dashboard();
+
+// update incident badge on load
+api('/incidents').then(data => {
+  if (!data) return;
+  const cnt = data.filter(i=>i.status==='active').length;
+  const b = $('incBadge');
+  if (cnt>0){ b.textContent=cnt; b.classList.remove('hidden'); }
+});
+</script>
+</body>
+</html>
